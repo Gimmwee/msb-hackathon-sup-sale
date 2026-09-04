@@ -8,7 +8,7 @@ load_dotenv()
 
 from app.agent import current_session_id, get_agent, run_agent
 from app.crud import get_recent_chat, save_chat
-from app.database import AsyncSessionLocal, connect_with_retry
+from app.database import AsyncSessionLocal, connect_with_retry, engine
 from app.models import Base
 from greennode_agentbase import GreenNodeAgentBaseApp, PingStatus, RequestContext
 
@@ -19,8 +19,8 @@ logger = logging.getLogger("sup_sale.agentbase")
 def _ensure_tables():
     async def _run():
         await connect_with_retry()
-        async with AsyncSessionLocal() as db:
-            await db.run_sync(Base.metadata.create_all)
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     asyncio.run(_run())
 
 

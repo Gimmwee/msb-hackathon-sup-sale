@@ -1,5 +1,6 @@
 import contextvars
 import logging
+import re
 
 from langchain.agents import create_agent
 from langchain_core.tools import tool
@@ -36,6 +37,82 @@ def build_llm() -> ChatOpenAI:
         model=settings.llm_model,
         base_url=settings.llm_base_url,
         api_key=settings.greennode_api_key,
+    )
+
+
+_MOCK_PHONE_RE = re.compile(r"(0|\+84)[3-9][0-9]{8}")
+_MOCK_NAME_RE = re.compile(
+    r"(?:mình tên|em tên|tôi tên|tui tên|tên)\s+([^,\.\d]+?)(?:\s*,|\s*\.|\s+\d|$)",
+    re.IGNORECASE,
+)
+_MOCK_INTEREST_KEYWORDS = [
+    ("vay tín chấp", "Vay tín chấp"),
+    ("vay thế chấp", "Vay thế chấp"),
+    ("vay mua xe", "Vay mua xe"),
+    ("vay mua nhà", "Vay mua nhà"),
+    ("vay", "Vay"),
+    ("thẻ tín dụng", "Thẻ tín dụng"),
+    ("thẻ", "Thẻ tín dụng"),
+    ("tiết kiệm", "Gửi tiết kiệm"),
+    ("mở sổ", "Gửi tiết kiệm"),
+    ("chuyển tiền", "Chuyển tiền"),
+    ("mua xe", "Vay mua xe"),
+    ("mua nhà", "Vay mua nhà"),
+]
+
+
+def _mock_extract(text: str) -> tuple[str | None, str | None, str | None]:
+    pm = _MOCK_PHONE_RE.search(text)
+    phone = pm.group(0) if pm else None
+    name = None
+    nm = _MOCK_NAME_RE.search(text)
+    if nm:
+        parts = nm.group(1).strip().split()
+        if parts:
+            name = " ".join(parts[:4])
+    low = text.lower()
+    interest = None
+    for kw, label in _MOCK_INTEREST_KEYWORDS:
+        if kw in low:
+            interest = label
+            break
+    if not interest:
+        m = re.search(r"muốn\s+([^,\.\d]+?)(?:\s*,|\s*\.|$)", text, re.IGNORECASE)
+        if m:
+            interest = " ".join(m.group(1).strip().split()[:8]) or None
+    return name, phone, interest
+
+
+async def mock_run_agent(messages: list[dict]) -> str:
+    last = ""
+    for m in reversed(messages):
+        if m.get("role") == "user":
+            last = m.get("content", "")
+            break
+    name, phone, interest = _mock_extract(last)
+    missing = []
+    if not name:
+        missing.append("họ tên")
+    if not phone:
+        missing.append("số điện thoại (vd 0912345678)")
+    if not interest:
+        missing.append("nhu cầu sản phẩm")
+    if missing:
+        return (
+            "[mock] Chào bạn, em là sup-sale MSB. Để ghi nhận thông tin, em còn cần thêm: "
+            + ", ".join(missing) + " ạ."
+        )
+    if not validate_phone(phone):
+        return f"[mock] Số điện thoại {phone} không đúng định dạng VN, anh/chị kiểm tra lại giúp em nha."
+    session_id = current_session_id.get()
+    if not session_id:
+        return "[mock] Không xác định được phiên hội thoại."
+    async with AsyncSessionLocal() as db:
+        lead = await upsert_lead(db, session_id, name, phone, interest)
+    logger.info("[mock] Lead saved: session=%s phone=%s name=%s", session_id, phone, name)
+    return (
+        f"[mock] Đã lưu lead: {lead.name} - {lead.phone} - {lead.product_interest}. "
+        f"Cảm ơn anh/chị, em sẽ liên hệ lại ạ!"
     )
 
 
@@ -78,6 +155,8 @@ def get_agent():
 
 
 async def run_agent(messages: list[dict]) -> str:
+    if settings.llm_mock:
+        return await mock_run_agent(messages)
     agent = get_agent()
     result = await agent.ainvoke({"messages": messages})
     return result["messages"][-1].content

@@ -1,10 +1,10 @@
 import os
 import time
+from datetime import timedelta
 
 import requests
 import streamlit as st
 from dotenv import load_dotenv
-from streamlit_autorefresh import st_autorefresh
 
 load_dotenv()
 
@@ -23,10 +23,8 @@ def fetch_leads():
         )
         if resp.status_code == 200:
             return resp.json()
-        st.toast(f"GET /api/leads -> {resp.status_code}: {resp.text[:200]}")
         return []
-    except Exception as exc:
-        st.toast(f"Không kết nối được backend: {exc}")
+    except Exception:
         return []
 
 
@@ -50,51 +48,54 @@ with st.sidebar:
         st.session_state.chat_history.append({"role": "user", "content": user_input})
         with st.chat_message("user"):
             st.markdown(user_input)
-        try:
-            resp = requests.post(
-                f"{API_BASE_URL}/api/chat",
-                json={
-                    "session_id": st.session_state.session_id,
-                    "platform": "web",
-                    "message": user_input,
-                },
-                timeout=60,
-            )
-            reply = resp.json().get("reply", f"(lỗi {resp.status_code})")
-        except Exception as exc:
-            reply = f"Lỗi kết nối backend: {exc}"
+        with st.spinner("sup-sale đang trả lời..."):
+            try:
+                resp = requests.post(
+                    f"{API_BASE_URL}/api/chat",
+                    json={
+                        "session_id": st.session_state.session_id,
+                        "platform": "web",
+                        "message": user_input,
+                    },
+                    timeout=120,
+                )
+                reply = resp.json().get("reply", f"(lỗi {resp.status_code})")
+            except Exception as exc:
+                reply = f"Lỗi kết nối backend: {exc}"
         st.session_state.chat_history.append({"role": "assistant", "content": reply})
         with st.chat_message("assistant"):
             st.markdown(reply)
 
 
-st_autorefresh(interval=5000, key="leads_refresh")
-
 st.title("sup-sale — Dashboard Leads")
-st.caption("Tự làm mới mỗi 5 giây.")
+st.caption("Bảng tự làm mới mỗi 5 giây.")
 
-leads = fetch_leads()
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Total Leads Captured", len(leads))
-new_count = sum(1 for l in leads if l.get("status") == "new")
-col2.metric("Leads mới (new)", new_count)
-zalo_count = sum(1 for l in leads if str(l.get("session_id", "")).startswith("zalo:"))
-col3.metric("Leads từ Zalo", zalo_count)
+@st.fragment(run_every=timedelta(seconds=5))
+def leads_dashboard():
+    leads = fetch_leads()
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total Leads Captured", len(leads))
+    new_count = sum(1 for l in leads if l.get("status") == "new")
+    col2.metric("Leads mới (new)", new_count)
+    zalo_count = sum(1 for l in leads if str(l.get("session_id", "")).startswith("zalo:"))
+    col3.metric("Leads từ Zalo", zalo_count)
+    st.subheader("Danh sách Leads")
+    if leads:
+        table_rows = [
+            {
+                "Tên": l.get("name"),
+                "SĐT": l.get("phone"),
+                "Nhu cầu": l.get("product_interest"),
+                "Session": l.get("session_id"),
+                "Trạng thái": l.get("status"),
+                "Trích xuất lúc": l.get("extracted_at"),
+            }
+            for l in leads
+        ]
+        st.table(table_rows)
+    else:
+        st.info("Chưa có lead nào. Hãy chat ở sidebar và cung cấp tên + SĐT + nhu cầu.")
 
-st.subheader("Danh sách Leads")
-if leads:
-    table_rows = [
-        {
-            "Tên": l.get("name"),
-            "SĐT": l.get("phone"),
-            "Nhu cầu": l.get("product_interest"),
-            "Session": l.get("session_id"),
-            "Trạng thái": l.get("status"),
-            "Trích xuất lúc": l.get("extracted_at"),
-        }
-        for l in leads
-    ]
-    st.table(table_rows)
-else:
-    st.info("Chưa có lead nào. Hãy chat ở sidebar và cung cấp tên + SĐT + nhu cầu, hoặc chạy `scripts/seed_demo_data.py`.")
+
+leads_dashboard()

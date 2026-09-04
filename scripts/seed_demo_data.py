@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.crud import upsert_lead
-from app.database import AsyncSessionLocal, connect_with_retry
+from app.database import AsyncSessionLocal, connect_with_retry, engine
 from app.models import Base
 
 DEMOS = [
@@ -35,8 +35,8 @@ async def main() -> int:
     if not ok:
         print("Cannot connect to DB.", file=sys.stderr)
         return 1
-    async with AsyncSessionLocal() as db:
-        await db.run_sync(Base.metadata.create_all)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     for session_id, name, phone, interest in DEMOS:
         async with AsyncSessionLocal() as db:
             lead = await upsert_lead(db, session_id, name, phone, interest)

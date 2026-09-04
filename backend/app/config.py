@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     greennode_api_key: str = ""
     llm_base_url: str = "https://maas-llm-aiplatform-hcm.api.vngcloud.vn/v1"
     llm_model: str = ""
+    llm_mock: bool = False
 
     zalo_bot_token: str = ""
     zalo_oa_secret_key: str = ""

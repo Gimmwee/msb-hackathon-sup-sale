@@ -8,7 +8,7 @@ from sqlalchemy import text
 from .agent import current_session_id, get_agent, run_agent
 from .config import settings
 from .crud import get_recent_chat, list_leads, save_chat
-from .database import AsyncSessionLocal, connect_with_retry
+from .database import AsyncSessionLocal, connect_with_retry, engine
 from .models import Base
 from .schemas import ChatRequest, ChatResponse
 from .zalo import parse_zalo_event, send_zalo_message, verify_zalo_signature
@@ -21,17 +21,20 @@ logging.basicConfig(level=logging.INFO)
 async def lifespan(app: FastAPI):
     ok = await connect_with_retry()
     if ok:
-        async with AsyncSessionLocal() as db:
-            await db.run_sync(Base.metadata.create_all)
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
         logger.info("DB tables ensured.")
-    if not settings.llm_model:
-        logger.warning("LLM_MODEL is empty — /api/chat will fail until you set a real model id.")
-    if not settings.greennode_api_key:
-        logger.warning("GREENNODE_API_KEY is empty — LLM calls will be unauthorized.")
-    try:
-        get_agent()
-    except Exception as exc:
-        logger.warning("Agent build failed at startup (will retry on first chat): %s", exc)
+    if settings.llm_mock:
+        logger.warning("LLM_MOCK=true — chạy mock agent (không gọi LLM/DNS). Chỉ cho demo/test.")
+    else:
+        if not settings.llm_model:
+            logger.warning("LLM_MODEL is empty — /api/chat will fail until you set a real model id.")
+        if not settings.greennode_api_key:
+            logger.warning("GREENNODE_API_KEY is empty — LLM calls will be unauthorized.")
+        try:
+            get_agent()
+        except Exception as exc:
+            logger.warning("Agent build failed at startup (will retry on first chat): %s", exc)
     yield
 
 
