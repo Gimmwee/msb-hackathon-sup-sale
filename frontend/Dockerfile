@@ -1,12 +1,7 @@
-FROM python:3.11-slim
-
+FROM node:20-alpine
 WORKDIR /app
-ENV PYTHONUNBUFFERED=1
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
+COPY package.json .
+RUN npm install
 COPY . .
-
-EXPOSE 8501
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+EXPOSE 5173
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

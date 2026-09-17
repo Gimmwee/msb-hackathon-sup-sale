@@ -1,13 +1,12 @@
-FROM python:3.11-slim
-
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app
+COPY pom.xml .
+COPY src ./src
+RUN mvn package -DskipTests -B -q
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+FROM eclipse-temurin:21-jre-alpine
+RUN apk add --no-cache curl
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
