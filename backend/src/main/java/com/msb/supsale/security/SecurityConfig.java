@@ -40,8 +40,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/chat", "/api/v1/ocr/**", "/api/v1/feedback", "/api/v1/webhooks/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/v1/staff/**").hasAnyRole("STAFF", "ADMIN")
-                .requestMatchers("/api/v1/leads", "/api/v1/leads/**").hasAnyRole("STAFF", "ADMIN")
+                .requestMatchers("/api/v1/sale/**").hasAnyRole("SALE", "ADMIN")
+                .requestMatchers("/api/v1/cc/**").hasAnyRole("CONTACT_CENTER", "ADMIN")
+                .requestMatchers("/api/v1/leads", "/api/v1/leads/**").hasAnyRole("SALE", "ADMIN", "CONTACT_CENTER")
+                .requestMatchers("/api/v1/staff/**").hasAnyRole("SALE", "ADMIN", "CONTACT_CENTER")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,0 +1,68 @@
+package com.msb.supsale.controller;
+
+import com.msb.supsale.model.Claim;
+import com.msb.supsale.model.Message;
+import com.msb.supsale.repository.UserRepository;
+import com.msb.supsale.service.ClaimService;
+import com.msb.supsale.service.ConversationService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/v1/cc/claims")
+public class ContactCenterController {
+
+    private final ClaimService claimService;
+    private final ConversationService conversationService;
+    private final UserRepository userRepository;
+
+    public ContactCenterController(ClaimService claimService, ConversationService conversationService,
+                                   UserRepository userRepository) {
+        this.claimService = claimService;
+        this.conversationService = conversationService;
+        this.userRepository = userRepository;
+    }
+
+    @GetMapping
+    public List<Claim> getClaims(@RequestParam(value = "status", required = false) String status) {
+        if (status != null && !status.isBlank()) {
+            return claimService.getClaimsByStatus(status);
+        }
+        return claimService.getAllClaims();
+    }
+
+    @GetMapping("/{id}")
+    public Claim getClaim(@PathVariable UUID id) {
+        return claimService.getClaim(id);
+    }
+
+    @GetMapping("/{id}/messages")
+    public List<Message> getClaimMessages(@PathVariable UUID id) {
+        Claim claim = claimService.getClaim(id);
+        return conversationService.getHistory(claim.getSessionId());
+    }
+
+    @PostMapping("/{id}/approve")
+    public Claim approve(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+        UUID resolvedBy = getCurrentUserId();
+        String editedResponse = body.get("response");
+        return claimService.approveClaim(id, resolvedBy, editedResponse);
+    }
+
+    @PostMapping("/{id}/abort")
+    public Claim abort(@PathVariable UUID id) {
+        UUID resolvedBy = getCurrentUserId();
+        return claimService.abortClaim(id, resolvedBy);
+    }
+
+    private UUID getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        return userRepository.findByUsername(username).orElseThrow().getId();
+    }
+}

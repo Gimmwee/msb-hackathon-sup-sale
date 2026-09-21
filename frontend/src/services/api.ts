@@ -109,3 +109,69 @@ export async function getConversations(): Promise<unknown[]> {
   if (!res.ok) throw new Error('Get conversations failed')
   return res.json()
 }
+
+export async function getSaleLeads(): Promise<Lead[]> {
+  const res = await fetch(`${API_BASE}/api/v1/sale/leads`, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Get sale leads failed')
+  return res.json()
+}
+
+export async function getLeadMessages(sessionId: string): Promise<{ role: string; content: string; createdAt: string }[]> {
+  const res = await fetch(`${API_BASE}/api/v1/sale/leads/${sessionId}/messages`, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Get messages failed')
+  return res.json()
+}
+
+export async function logSaleActivity(leadId: string, action: string, note: string): Promise<void> {
+  await fetch(`${API_BASE}/api/v1/sale/leads/${leadId}/activity`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ action, note }),
+  })
+}
+
+export async function getSaleKpi(): Promise<{ totalActivities: number; contacted: number; converted: number; conversionRate: number }> {
+  const res = await fetch(`${API_BASE}/api/v1/sale/kpi`, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Get KPI failed')
+  return res.json()
+}
+
+export async function saleLookup(query: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`${API_BASE}/api/v1/sale/lookup?query=${encodeURIComponent(query)}`, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Lookup failed')
+  return res.json()
+}
+
+export async function getSaleTransactions(query: string): Promise<{ category: string; amount: number; description: string; transactionDate: string }[]> {
+  const res = await fetch(`${API_BASE}/api/v1/sale/transactions?query=${encodeURIComponent(query)}`, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Get transactions failed')
+  return res.json()
+}
+
+export async function getClaims(status?: string): Promise<Record<string, unknown>[]> {
+  const url = status ? `${API_BASE}/api/v1/cc/claims?status=${status}` : `${API_BASE}/api/v1/cc/claims`
+  const res = await fetch(url, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Get claims failed')
+  return res.json()
+}
+
+export async function getClaimMessages(claimId: string): Promise<{ role: string; content: string; createdAt: string }[]> {
+  const res = await fetch(`${API_BASE}/api/v1/cc/claims/${claimId}/messages`, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Get claim messages failed')
+  return res.json()
+}
+
+export async function approveClaim(claimId: string, response: string): Promise<void> {
+  await fetch(`${API_BASE}/api/v1/cc/claims/${claimId}/approve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ response }),
+  })
+}
+
+export async function abortClaim(claimId: string): Promise<void> {
+  await fetch(`${API_BASE}/api/v1/cc/claims/${claimId}/abort`, {
+    method: 'POST',
+    headers: { ...authHeaders() },
+  })
+}

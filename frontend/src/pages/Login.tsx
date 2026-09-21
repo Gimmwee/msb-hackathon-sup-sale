@@ -22,7 +22,8 @@ export default function Login() {
     try {
       const res = await apiLogin(username, password)
       login(res.accessToken, res.role, res.fullName)
-      navigate('/staff/dashboard')
+      const dest = res.role === 'ADMIN' ? '/admin/users' : res.role === 'SALE' ? '/sale/upsale' : '/cc'
+      navigate(dest)
     } catch {
       setError('Tên đăng nhập hoặc mật khẩu không đúng')
     } finally {
@@ -56,7 +57,7 @@ export default function Login() {
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
-        <p className="login-hint">Demo: admin/Admin@123 hoặc staff01/Staff@123</p>
+        <p className="login-hint">Demo: admin/Admin@123 • sale01/Sale@123 • cc01/Cc@12345</p>
         <button className="back-btn" onClick={() => navigate('/')}>← Quay lại</button>
       </div>
     </div>

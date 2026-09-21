@@ -20,6 +20,18 @@ public class CustomerService {
         return customerRepository.findByPhone(phone);
     }
 
+    public Optional<Customer> findByIdNumber(String idNumber) {
+        return customerRepository.findByIdNumber(idNumber);
+    }
+
+    @Transactional
+    public void updateEmail(String phone, String email) {
+        customerRepository.findByPhone(phone).ifPresent(customer -> {
+            customer.setEmail(email);
+            customerRepository.save(customer);
+        });
+    }
+
     @Transactional
     public Customer saveOrUpdateFromCccd(String phone, CccdDto dto) {
         Optional<Customer> existing = customerRepository.findByPhone(phone);

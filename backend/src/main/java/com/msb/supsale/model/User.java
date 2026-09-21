@@ -30,7 +30,7 @@ public class User {
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
-    public enum Role { ADMIN, STAFF }
+    public enum Role { ADMIN, SALE, CONTACT_CENTER }
 
     @PrePersist
     void prePersist() { createdAt = Instant.now(); }

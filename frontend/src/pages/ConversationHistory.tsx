@@ -35,7 +35,7 @@ export default function ConversationHistory() {
           </div>
         </div>
         <div className="header-right">
-          <button className="header-btn" onClick={() => navigate('/staff/dashboard')}>← Dashboard</button>
+          <button className="header-btn" onClick={() => navigate('/sale/upsale')}>← Sale Dashboard</button>
           <button className="header-btn" onClick={() => { logout(); navigate('/') }}>Đăng xuất</button>
         </div>
       </header>

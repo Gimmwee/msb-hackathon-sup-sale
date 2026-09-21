@@ -24,7 +24,7 @@ public class Message {
     private Instant createdAt;
 
     @PrePersist
-    void prePersist() { createdAt = Instant.now(); }
+    void prePersist() { if (createdAt == null) createdAt = Instant.now(); }
 
     public UUID getId() { return id; }
     public String getSessionId() { return sessionId; }
@@ -34,4 +34,5 @@ public class Message {
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
     public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

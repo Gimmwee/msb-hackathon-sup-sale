@@ -3,6 +3,7 @@ package com.msb.supsale.agent.tools;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.msb.supsale.agent.AgentTool;
 import com.msb.supsale.model.Lead;
+import com.msb.supsale.service.CustomerService;
 import com.msb.supsale.service.LeadService;
 import com.msb.supsale.util.PhoneValidator;
 import org.slf4j.Logger;
@@ -17,8 +18,12 @@ import java.util.Map;
 public class LeadTool implements AgentTool {
     private static final Logger log = LoggerFactory.getLogger(LeadTool.class);
     private final LeadService leadService;
+    private final CustomerService customerService;
 
-    public LeadTool(LeadService leadService) { this.leadService = leadService; }
+    public LeadTool(LeadService leadService, CustomerService customerService) {
+        this.leadService = leadService;
+        this.customerService = customerService;
+    }
 
     @Override
     public String getName() { return "captureLead"; }
@@ -34,6 +39,7 @@ public class LeadTool implements AgentTool {
         props.put("customerName", Map.of("type", "string", "description", "Họ và tên khách hàng"));
         props.put("phone", Map.of("type", "string", "description", "Số điện thoại VN: 09xxxxxxxx, 03xxxxxxxx, 07xxxxxxxx, 08xxxxxxxx, 05xxxxxxxx, hoặc +84xxxxxxxxx"));
         props.put("productInterest", Map.of("type", "string", "description", "Nhu cầu/sản phẩm quan tâm: vay tín chấp, vay mua xe, vay mua nhà, thẻ tín dụng..."));
+        props.put("email", Map.of("type", "string", "description", "Email khách hàng (nếu có)"));
 
         Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");
@@ -47,6 +53,8 @@ public class LeadTool implements AgentTool {
         String name = args.path("customerName").asText();
         String phone = args.path("phone").asText();
         String interest = args.path("productInterest").asText();
+        String email = args.path("email").asText();
+        if (email != null && email.isBlank()) email = null;
 
         String normalized = PhoneValidator.normalize(phone);
         if (!PhoneValidator.isValid(normalized)) {
@@ -54,6 +62,11 @@ public class LeadTool implements AgentTool {
         }
 
         Lead lead = leadService.captureLead(sessionId, name, normalized, interest);
+
+        if (email != null && !email.isEmpty()) {
+            customerService.updateEmail(normalized, email);
+        }
+
         return String.format("{\"success\":true,\"leadId\":\"%s\",\"message\":\"Lead đã được lưu thành công\"}", lead.getId());
     }
 }
