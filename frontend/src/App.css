@@ -9,10 +9,10 @@ body { font-family: var(--font-sans); background: var(--console-bg); color: var(
   background: #FFFFFF; border-bottom: 1px solid #E2E8F0;
   position: sticky; top: 0; z-index: 100;
 }
-.msb-nav-logo { font-size: 24px; font-weight: 800; color: #E31837; letter-spacing: 0.5px; }
+.msb-nav-logo-img { width: 48px; height: 36px; object-fit: contain; display: block; }
 .msb-nav-items { display: flex; gap: 28px; margin-left: 40px; }
-.msb-nav-items span { font-size: 14px; font-weight: 500; cursor: pointer; color: #475569; transition: color var(--transition-fast); }
-.msb-nav-items span:hover { color: #0F172A; }
+.msb-nav-items button { border: 0; padding: 0; background: transparent; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; color: #475569; transition: color var(--transition-fast); }
+.msb-nav-items button:hover { color: #0F172A; }
 .msb-nav-login {
   margin-left: auto; background: #E31837; color: white;
   border: none; border-radius: var(--radius-sm);
@@ -48,6 +48,15 @@ body { font-family: var(--font-sans); background: var(--console-bg); color: var(
   font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 
+.msb-hero-cta {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: white; color: #E31837; border: none;
+  border-radius: 28px; padding: 12px 28px; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all var(--transition-fast);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+.msb-hero-cta:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+
 .msb-categories {
   position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
   display: flex; backdrop-filter: blur(8px);
@@ -56,7 +65,8 @@ body { font-family: var(--font-sans); background: var(--console-bg); color: var(
 }
 .msb-category-item {
   flex: 1; display: flex; align-items: center; gap: 14px; padding: 20px 24px;
-  border-right: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background var(--transition-fast);
+  border: 0; border-right: 1px solid rgba(255,255,255,0.1); text-align: left;
+  background: transparent; cursor: pointer; transition: background var(--transition-fast);
 }
 .msb-category-item:last-child { border-right: none; }
 .msb-category-item:hover { background: rgba(255,255,255,0.08); }
@@ -64,15 +74,33 @@ body { font-family: var(--font-sans); background: var(--console-bg); color: var(
 .msb-category-item h3 { font-size: 15px; font-weight: 600; margin-bottom: 2px; color: white; }
 .msb-category-item p { font-size: 12px; color: rgba(255,255,255,0.7); }
 
+.msb-products { background: #f7f9fc; padding: 72px 48px 88px; color: #0f172a; }
+.msb-products-heading { max-width: 680px; margin: 0 auto 34px; text-align: center; }
+.msb-eyebrow { color: #e31837; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+.msb-products-heading h2 { font-size: 30px; line-height: 1.2; margin-bottom: 12px; }
+.msb-products-heading > p:last-child { color: #64748b; line-height: 1.6; }
+.msb-product-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.msb-product-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px; box-shadow: 0 8px 24px rgba(15,23,42,0.06); scroll-margin-top: 76px; }
+.msb-product-icon { font-size: 30px; margin-bottom: 16px; }
+.msb-product-card h3 { font-size: 18px; margin-bottom: 8px; }
+.msb-product-card > p { color: #64748b; font-size: 14px; line-height: 1.5; min-height: 44px; }
+.msb-product-card ul { list-style: none; margin: 20px 0; display: grid; gap: 10px; }
+.msb-product-card li { color: #334155; font-size: 13px; padding-left: 18px; position: relative; }
+.msb-product-card li::before { content: '✓'; position: absolute; left: 0; color: #e31837; font-weight: 700; }
+.msb-product-card button { border: 0; background: transparent; color: #e31837; font-weight: 700; padding: 0; cursor: pointer; }
+.msb-product-card button span { font-size: 18px; margin-left: 5px; }
+
 /* ============ CHAT WIDGET ============ */
 .chat-fab {
   position: fixed; bottom: 28px; right: 28px; width: 56px; height: 56px;
   border-radius: 50%; background: #E31837; color: white;
   border: none; font-size: 26px; cursor: pointer; z-index: 9999;
   box-shadow: 0 4px 20px rgba(227,24,55,0.35);
-  transition: transform var(--transition-fast);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
-.chat-fab:hover { transform: scale(1.08); }
+.chat-fab:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 8px 24px rgba(227,24,55,0.4); }
+.chat-fab:focus-visible { outline: 3px solid rgba(227,24,55,0.28); outline-offset: 4px; }
 
 .chat-widget {
   position: fixed; bottom: 28px; right: 28px; width: 372px; height: 540px;
@@ -91,10 +119,14 @@ body { font-family: var(--font-sans); background: var(--console-bg); color: var(
   display: flex; justify-content: space-between; align-items: center;
   font-size: 14px; font-weight: 600;
 }
+.chat-widget-header > span:first-child { min-width: 0; }
 .chat-widget-close {
   background: rgba(255,255,255,0.15); border: none; color: white;
-  border-radius: var(--radius-sm); width: 26px; height: 26px; cursor: pointer; font-size: 13px;
+  border-radius: var(--radius-sm); width: 26px; height: 26px; cursor: pointer;
+  font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition-fast);
 }
+.chat-widget-close:hover { background: rgba(255,255,255,0.3); }
 .chat-widget .chat-messages { flex: 1; overflow-y: auto; padding: 12px; }
 .chat-widget .quick-buttons { padding: 8px 12px; }
 .chat-widget .chat-input { padding: 8px 12px 12px; }
@@ -175,6 +207,7 @@ body { font-family: var(--font-sans); background: var(--console-bg); color: var(
   border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
   font-size: 32px; font-weight: 700; margin: 0 auto 16px;
 }
+.login-logo-image { width: 88px; height: 64px; object-fit: contain; display: block; margin: 0 auto 16px; }
 .login-card h1 { font-size: 20px; text-align: center; margin-bottom: 24px; color: var(--console-text); }
 .login-card form { display: flex; flex-direction: column; gap: 12px; }
 .login-card input {
@@ -203,6 +236,13 @@ body { font-family: var(--font-sans); background: var(--console-bg); color: var(
   border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
   font-size: 22px; font-weight: 700;
 }
+.logo-image { width: 52px; height: 40px; object-fit: contain; display: block; background: #fff; padding: 3px; }
+.sale-logo-image { width: 72px; height: 48px; object-fit: contain; display: block; margin: 0 0 12px; background: #fff; padding: 3px; }
+.chat-logo-image, .chat-logo-small {
+  flex: 0 0 auto; object-fit: contain; display: block;
+}
+.chat-logo-image { width: 42px; height: 30px; }
+.chat-logo-small { width: 28px; height: 20px; }
 .header h1 { font-size: 17px; font-weight: 600; }
 .subtitle { font-size: 12px; color: var(--console-text-muted); }
 .header-right { display: flex; align-items: center; }
@@ -238,9 +278,30 @@ body { font-family: var(--font-sans); background: var(--console-bg); color: var(
 .sale-content { flex: 1; padding: 24px; overflow-y: auto; }
 
 @media (max-width: 768px) {
+  .msb-nav { padding: 12px 18px; }
+  .msb-nav-items { gap: 14px; margin-left: 18px; }
+  .msb-nav-items button { font-size: 12px; }
+  .msb-hero { min-height: 680px; background-position: 62% center; }
+  .msb-hero-content { max-width: 75%; padding: 0 24px; }
+  .msb-hero-content h1 { font-size: 30px; }
+  .msb-categories { overflow-x: auto; }
+  .msb-category-item { min-width: 210px; padding: 16px; }
+  .msb-products { padding: 52px 20px 64px; }
+  .msb-products-heading h2 { font-size: 26px; }
+  .msb-product-grid { grid-template-columns: repeat(2, 1fr); }
   .sale-sidebar { width: 60px; }
   .sale-sidebar-header h2, .sale-sidebar-header p, .sale-nav-item span { display: none; }
   .sale-nav-item { justify-content: center; padding: 14px; }
+}
+
+@media (max-width: 520px) {
+  .msb-nav-logo-img { width: 42px; }
+  .msb-nav-items { gap: 10px; margin-left: 12px; }
+  .msb-nav-items button { font-size: 11px; }
+  .msb-nav-login { padding: 8px 12px; font-size: 12px; }
+  .msb-hero-content { max-width: 92%; }
+  .msb-hero-arrow { right: 12px; }
+  .msb-product-grid { grid-template-columns: 1fr; }
 }
 
 /* ============ DASHBOARD / METRICS ============ */

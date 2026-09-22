@@ -28,7 +28,7 @@ export default function ConversationHistory() {
     <div className="app">
       <header className="header">
         <div className="header-left">
-          <div className="logo">M</div>
+          <img src="/assets/logologinchatbot.png" alt="MSB" className="logo-image" />
           <div>
             <h1>Lịch sử hội thoại</h1>
             <p className="subtitle">{user?.fullName} ({user?.role})</p>

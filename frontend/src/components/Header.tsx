@@ -2,7 +2,7 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header-left">
-        <div className="logo">M</div>
+        <img src="/assets/logologinchatbot.png" alt="MSB" className="logo-image" />
         <div>
           <h1>MSB AI Customer Assistant</h1>
           <p className="subtitle">sup-sale — Tư vấn viên AI</p>

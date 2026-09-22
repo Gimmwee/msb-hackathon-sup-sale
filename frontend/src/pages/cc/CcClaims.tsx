@@ -5,11 +5,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { getClaims, getClaimMessages, approveClaim, abortClaim } from '../../services/api'
 import ChatWidget from '../../components/ChatWidget'
 import ConfirmModal from '../../components/ConfirmModal'
-
-interface ClaimData {
-  id: string; sessionId: string; customerName: string; customerPhone: string;
-  topic: string; claimContent: string; suggestedResponse: string; status: string; createdAt: string;
-}
+import type { ClaimData } from '../../types'
 
 export default function CcClaims() {
   const { user, logout } = useAuth()
@@ -24,7 +20,7 @@ export default function CcClaims() {
   const [showAbortModal, setShowAbortModal] = useState(false)
 
   const fetchClaims = async () => {
-    try { setClaims(await getClaims(filter || undefined) as ClaimData[]) } catch {}
+    try { setClaims(await getClaims(filter || undefined)) } catch {}
   }
   useEffect(() => { fetchClaims() }, [filter])
 
@@ -73,7 +69,7 @@ export default function CcClaims() {
     <div className="app">
       <header className="header">
         <div className="header-left">
-          <div className="logo">M</div>
+          <img src="/assets/logologinchatbot.png" alt="MSB" className="logo-image" />
           <div><h1>Contact Center — Claims</h1><p className="subtitle">{user?.fullName} ({user?.role})</p></div>
         </div>
         <div className="header-right">

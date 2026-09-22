@@ -52,7 +52,7 @@ export default function AdminUsers() {
     <div className="app">
       <header className="header">
         <div className="header-left">
-          <div className="logo">M</div>
+          <img src="/assets/logologinchatbot.png" alt="MSB" className="logo-image" />
           <div><h1>Quản lý tài khoản</h1><p className="subtitle">{user?.fullName} (ADMIN)</p></div>
         </div>
         <div className="header-right">

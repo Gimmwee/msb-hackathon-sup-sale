@@ -6,6 +6,8 @@ interface Props {
   sessionId: string
   onLeadCaptured?: () => void
   mode?: 'customer' | 'staff'
+  open?: boolean
+  onToggle?: (open: boolean) => void
 }
 
 const CUSTOMER_QUICK = [
@@ -16,8 +18,13 @@ const CUSTOMER_QUICK = [
 
 const STAFF_QUICK: string[] = []
 
-export default function ChatWidget({ sessionId, onLeadCaptured, mode = 'customer' }: Props) {
-  const [open, setOpen] = useState(false)
+export default function ChatWidget({ sessionId, onLeadCaptured, mode = 'customer', open: externalOpen, onToggle }: Props) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = externalOpen !== undefined ? externalOpen : internalOpen
+  const setOpen = (val: boolean) => {
+    setInternalOpen(val)
+    onToggle?.(val)
+  }
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -100,7 +107,7 @@ export default function ChatWidget({ sessionId, onLeadCaptured, mode = 'customer
   if (!open) {
     return (
       <button className="chat-fab" onClick={() => setOpen(true)} title={isStaff ? 'Trợ lý nội bộ' : 'Chat với sup-sale'}>
-        {isStaff ? '🛠️' : '💬'}
+        <img src="/assets/logokhongnen.png" alt="chat" className="chat-logo-image" />
       </button>
     )
   }
@@ -108,8 +115,11 @@ export default function ChatWidget({ sessionId, onLeadCaptured, mode = 'customer
   return (
     <div className="chat-widget">
       <div className="chat-widget-header">
-        <span>{headerLabel}</span>
-        <button className="chat-widget-close" onClick={() => setOpen(false)}>✕</button>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img src="/assets/logokhongnen.png" alt="logo" className="chat-logo-small" />
+          {headerLabel}
+        </span>
+        <button className="chat-widget-close" onClick={() => setOpen(false)} title="Thu nhỏ">—</button>
       </div>
       <div className="chat-messages" ref={scrollRef}>
         {messages.length === 0 && <div className="chat-empty">{emptyMsg}</div>}

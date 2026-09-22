@@ -13,7 +13,7 @@ export default function StaffDashboard() {
     <div className="app">
       <header className="header">
         <div className="header-left">
-          <div className="logo">M</div>
+          <img src="/assets/logologinchatbot.png" alt="MSB" className="logo-image" />
           <div>
             <h1>MSB Staff Dashboard</h1>
             <p className="subtitle">{user?.fullName} ({user?.role})</p>

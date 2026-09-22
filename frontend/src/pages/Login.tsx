@@ -21,7 +21,7 @@ export default function Login() {
     setLoading(true)
     try {
       const res = await apiLogin(username, password)
-      login(res.accessToken, res.role, res.fullName)
+      login(res.accessToken, res.role, res.fullName, username)
       const dest = res.role === 'ADMIN' ? '/admin/users' : res.role === 'SALE' ? '/sale/upsale' : '/cc'
       navigate(dest)
     } catch {
@@ -34,7 +34,7 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-logo">M</div>
+        <img src="/assets/logologinchatbot.png" alt="MSB" className="login-logo-image" />
         <h1>Đăng nhập nhân viên</h1>
         {errorMsg && <div className="login-error">{errorMsg}</div>}
         {error && <div className="login-error">{error}</div>}

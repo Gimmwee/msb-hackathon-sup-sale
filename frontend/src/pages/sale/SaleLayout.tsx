@@ -18,6 +18,7 @@ export default function SaleLayout() {
     <div className="sale-layout">
       <aside className="sale-sidebar">
         <div className="sale-sidebar-header">
+          <img src="/assets/logologinchatbot.png" alt="MSB" className="sale-logo-image" />
           <h2>MSB Sale</h2>
           <p>{user?.fullName}</p>
         </div>

@@ -1,4 +1,4 @@
-import type { ChatRequest, ChatResponse, Lead, Metrics, FeedbackRequest, CccdInfo, LoginResponse, UserDto } from '../types'
+import type { ChatRequest, ChatResponse, Lead, Metrics, FeedbackRequest, CccdInfo, LoginResponse, UserDto, ClaimData } from '../types'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 const API_KEY = import.meta.env.VITE_DASHBOARD_API_KEY || 'demo-key'
@@ -148,7 +148,7 @@ export async function getSaleTransactions(query: string): Promise<{ category: st
   return res.json()
 }
 
-export async function getClaims(status?: string): Promise<Record<string, unknown>[]> {
+export async function getClaims(status?: string): Promise<ClaimData[]> {
   const url = status ? `${API_BASE}/api/v1/cc/claims?status=${status}` : `${API_BASE}/api/v1/cc/claims`
   const res = await fetch(url, { headers: authHeaders() })
   if (!res.ok) throw new Error('Get claims failed')

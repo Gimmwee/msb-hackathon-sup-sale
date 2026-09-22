@@ -70,3 +70,15 @@ export interface UserDto {
   active: boolean
   createdAt: string
 }
+
+export interface ClaimData {
+  id: string
+  sessionId: string
+  customerName: string
+  customerPhone: string
+  topic: string
+  claimContent: string
+  suggestedResponse: string
+  status: string
+  createdAt: string
+}
