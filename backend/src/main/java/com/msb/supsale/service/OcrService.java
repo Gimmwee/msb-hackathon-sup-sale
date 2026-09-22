@@ -15,6 +15,7 @@ import java.util.Map;
 @Service
 public class OcrService {
     private static final Logger log = LoggerFactory.getLogger(OcrService.class);
+    private static final String CLOUD_LLM_URL = "https://maas-llm-aiplatform-hcm.api.vngcloud.vn/v1";
 
     private final WebClient webClient;
     private final GreenNodeConfig config;
@@ -43,8 +44,10 @@ public class OcrService {
         this.config = config;
         this.objectMapper = objectMapper;
         this.customerService = customerService;
+        String baseUrl = config.getBaseUrl() != null && config.getBaseUrl().contains("host.docker.internal")
+            ? CLOUD_LLM_URL : config.getBaseUrl();
         this.webClient = WebClient.builder()
-                .baseUrl(config.getBaseUrl())
+            .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "Bearer " + config.getApiKey())
                 .defaultHeader("Content-Type", "application/json")
                 .build();

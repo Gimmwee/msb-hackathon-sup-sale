@@ -1,0 +1,11 @@
+.git
+.vscode
+.env
+.greennode.json
+frontend/node_modules
+frontend/dist
+backend/target
+**/__pycache__
+*.pyc
+nginx-proxy.conf.agentbase/
+.agentbase/

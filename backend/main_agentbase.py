@@ -16,11 +16,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("sup_sale.agentbase")
 
 
+DB_READY = False
+
+
 def _ensure_tables():
     async def _run():
-        await connect_with_retry()
+        global DB_READY
+        ok = await connect_with_retry()
+        if not ok:
+            logger.warning("DB unavailable — running without persistence")
+            return
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+        DB_READY = True
     asyncio.run(_run())
 
 
@@ -31,16 +39,25 @@ app = GreenNodeAgentBaseApp()
 
 
 async def _run(message: str, session_id: str) -> str:
-    async with AsyncSessionLocal() as db:
-        history = await get_recent_chat(db, session_id, 10)
+    history: list[dict] = []
+    if DB_READY:
+        try:
+            async with AsyncSessionLocal() as db:
+                history = await get_recent_chat(db, session_id, 10)
+        except Exception:
+            pass
     messages = history + [{"role": "user", "content": message}]
     token = current_session_id.set(session_id)
     try:
         reply = await run_agent(messages)
     finally:
         current_session_id.reset(token)
-    async with AsyncSessionLocal() as db:
-        await save_chat(db, session_id, "web", message, reply)
+    if DB_READY:
+        try:
+            async with AsyncSessionLocal() as db:
+                await save_chat(db, session_id, "web", message, reply)
+        except Exception:
+            pass
     return reply
 
 

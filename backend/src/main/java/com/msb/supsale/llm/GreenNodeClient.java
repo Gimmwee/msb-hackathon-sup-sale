@@ -15,6 +15,7 @@ import java.util.Map;
 @Component
 public class GreenNodeClient implements LlmClient {
     private static final Logger log = LoggerFactory.getLogger(GreenNodeClient.class);
+    private static final String CLOUD_LLM_URL = "https://maas-llm-aiplatform-hcm.api.vngcloud.vn/v1";
 
     private final WebClient webClient;
     private final GreenNodeConfig config;
@@ -23,13 +24,22 @@ public class GreenNodeClient implements LlmClient {
     public GreenNodeClient(GreenNodeConfig config, ObjectMapper objectMapper) {
         this.config = config;
         this.objectMapper = objectMapper;
+        String baseUrl = resolveBaseUrl(config.getBaseUrl());
         this.webClient = WebClient.builder()
-                .baseUrl(config.getBaseUrl())
+            .baseUrl(baseUrl)
                 .defaultHeader("Authorization", "Bearer " + config.getApiKey())
                 .defaultHeader("Content-Type", "application/json")
                 .build();
         log.info("GreenNodeClient initialized: customerModel={}, staffModel={}, baseUrl={}",
-                config.getModelCustomer(), config.getModelStaff(), config.getBaseUrl());
+                config.getModelCustomer(), config.getModelStaff(), baseUrl);
+    }
+
+    private static String resolveBaseUrl(String configuredUrl) {
+        if (configuredUrl != null && configuredUrl.contains("host.docker.internal")) {
+            log.warn("Local LLM URL detected; using GreenNode cloud endpoint for deployment");
+            return CLOUD_LLM_URL;
+        }
+        return configuredUrl;
     }
 
     @Override
