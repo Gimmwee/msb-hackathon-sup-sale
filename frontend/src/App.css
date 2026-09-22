@@ -2,60 +2,72 @@
 body { font-family: var(--font-sans); background: var(--console-bg); color: var(--console-text); }
 
 /* ============ CUSTOMER HOMEPAGE ============ */
-.customer-home { min-height: 100vh; background: var(--customer-bg); color: var(--customer-text); }
+.customer-home { min-height: 100vh; background: #0A1628; }
 
 .msb-nav {
   display: flex; align-items: center; padding: 14px 32px;
-  background: rgba(10,22,40,0.85); backdrop-filter: blur(12px);
-  position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--customer-border);
+  background: #FFFFFF; border-bottom: 1px solid #E2E8F0;
+  position: sticky; top: 0; z-index: 100;
 }
-.msb-nav-logo { font-size: 22px; font-weight: 700; color: var(--customer-accent); letter-spacing: 0.5px; }
-.msb-nav-items { display: flex; gap: 32px; margin-left: 48px; }
-.msb-nav-items span { font-size: 14px; font-weight: 500; cursor: pointer; color: var(--customer-text-muted); transition: color var(--transition-fast); }
-.msb-nav-items span:hover { color: var(--customer-text); }
+.msb-nav-logo { font-size: 24px; font-weight: 800; color: #E31837; letter-spacing: 0.5px; }
+.msb-nav-items { display: flex; gap: 28px; margin-left: 40px; }
+.msb-nav-items span { font-size: 14px; font-weight: 500; cursor: pointer; color: #475569; transition: color var(--transition-fast); }
+.msb-nav-items span:hover { color: #0F172A; }
 .msb-nav-login {
-  margin-left: auto; background: transparent; color: var(--customer-gold);
-  border: 1px solid var(--customer-gold); border-radius: var(--radius-sm);
-  padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all var(--transition-fast);
+  margin-left: auto; background: #E31837; color: white;
+  border: none; border-radius: var(--radius-sm);
+  padding: 8px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity var(--transition-fast);
 }
-.msb-nav-login:hover { background: var(--customer-gold); color: var(--customer-bg); }
+.msb-nav-login:hover { opacity: 0.9; }
 
-.msb-hero { display: flex; align-items: center; padding: 72px 48px; gap: 48px; max-width: 1200px; margin: 0 auto; }
-.msb-hero-content { flex: 1; }
-.msb-hero-content h1 { font-size: 30px; font-weight: 700; line-height: 1.25; margin-bottom: 14px; max-width: 480px; }
-.msb-hero-content p { font-size: 15px; color: var(--customer-text-muted); line-height: 1.6; max-width: 420px; margin-bottom: 24px; }
-.msb-hero-cta {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: var(--customer-accent); color: white; border: none;
-  border-radius: var(--radius-sm); padding: 12px 24px; font-size: 14px; font-weight: 600;
-  cursor: pointer; transition: opacity var(--transition-fast);
+.msb-hero {
+  position: relative; min-height: 75vh; display: flex; align-items: center;
+  background: url('/assets/msblogo.png') right center / cover no-repeat, #0A1628;
+  overflow: hidden;
 }
-.msb-hero-cta:hover { opacity: 0.9; }
-.msb-hero-visual {
-  flex: 0 0 280px; height: 200px; display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--customer-gold); border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(212,167,44,0.06), transparent);
+.msb-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to right, #E31837 0%, rgba(227,24,55,0.75) 35%, rgba(227,24,55,0.15) 65%, transparent 100%);
 }
-.msb-hero-visual-icon { font-size: 64px; }
+.msb-hero-content {
+  position: relative; z-index: 2; padding: 0 48px; max-width: 45%; color: white;
+}
+.msb-hero-content h1 { font-size: 36px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
+.msb-hero-content p { font-size: 16px; opacity: 0.9; line-height: 1.6; margin-bottom: 24px; }
+.msb-hero-search {
+  display: flex; align-items: center; gap: 10px;
+  background: white; border-radius: 28px; padding: 10px 20px; width: 320px;
+}
+.msb-search-icon { font-size: 16px; }
+.msb-hero-search input { border: none; outline: none; font-size: 14px; flex: 1; color: #475569; background: transparent; }
+.msb-hero-arrow {
+  position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
+  z-index: 3; width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,0.2); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.3); color: white;
+  font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
 
 .msb-categories {
-  display: flex; max-width: 1200px; margin: 0 auto; padding: 0 48px 64px;
-  border-top: 1px solid var(--customer-border);
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 2;
+  display: flex; backdrop-filter: blur(8px);
+  background: rgba(10,22,40,0.4);
+  border-top: 1px solid rgba(255,255,255,0.1);
 }
 .msb-category-item {
-  flex: 1; display: flex; align-items: center; gap: 14px; padding: 28px 20px;
-  border-right: 1px solid var(--customer-border); cursor: pointer; transition: background var(--transition-fast);
+  flex: 1; display: flex; align-items: center; gap: 14px; padding: 20px 24px;
+  border-right: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background var(--transition-fast);
 }
 .msb-category-item:last-child { border-right: none; }
-.msb-category-item:hover { background: var(--customer-surface); }
-.msb-category-icon { font-size: 28px; flex-shrink: 0; }
-.msb-category-item h3 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
-.msb-category-item p { font-size: 12px; color: var(--customer-text-muted); }
+.msb-category-item:hover { background: rgba(255,255,255,0.08); }
+.msb-category-icon { font-size: 26px; flex-shrink: 0; }
+.msb-category-item h3 { font-size: 15px; font-weight: 600; margin-bottom: 2px; color: white; }
+.msb-category-item p { font-size: 12px; color: rgba(255,255,255,0.7); }
 
 /* ============ CHAT WIDGET ============ */
 .chat-fab {
   position: fixed; bottom: 28px; right: 28px; width: 56px; height: 56px;
-  border-radius: 50%; background: var(--customer-accent); color: white;
+  border-radius: 50%; background: #E31837; color: white;
   border: none; font-size: 26px; cursor: pointer; z-index: 9999;
   box-shadow: 0 4px 20px rgba(227,24,55,0.35);
   transition: transform var(--transition-fast);

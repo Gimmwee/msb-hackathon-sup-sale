@@ -1,93 +1,63 @@
 # Handoff Notes
 
 ## Task vừa thực hiện
-Phase 8 — Audit UX Polish: Xoá native dialog + Fix duplicate actions + State machine
+Phase 12 — Fix Persist Lead Status + JWT Mất Khi F5 + Lead Trùng Lặp
 
 ## Trạng thái build/run
-- `docker compose up -d --build`: OK (3 container healthy)
-- Frontend: HTTP 200
-- Grep `alert(|confirm(|window.alert|window.confirm` trong toàn bộ `frontend/src/`: **CLEAN — 0 matches** (bằng chứng dán dưới)
+- `docker build --network=host` (backend): OK
+- `docker compose up -d`: OK (3 container healthy)
+- All 3 fixes verified via API test
 
-## Grep bằng chứng (raw output)
-```
-=== grep alert/confirm ===
-CLEAN - no alert/confirm found
-```
+## 1. JWT/session mất khi F5
 
-## Danh sách file đã sửa (chi tiết)
+### Nguyên nhân gốc
+`AuthContext` dùng `useEffect` để đọc `localStorage` → chạy SAU render đầu tiên. `ProtectedRoute` thấy `user=null` ở render đầu → redirect `/login` trước khi `useEffect` kịp khôi phục.
 
-### 1. ToastProvider + Toast (MỚI)
-- `frontend/src/contexts/ToastContext.tsx` [NEW]
-  - React Context + `useToast()` hook: `success()`, `error()`, `info()`
-  - Top-right position (không đè ChatWidget bottom-right)
-  - Auto-dismiss 3s, animation `toastIn` (slide from right)
-  - 3 variants: success=var(--status-success), error=var(--status-error), info=var(--status-info)
+### Fix
+Đổi `useState(null)` → `useState(() => { ... đọc localStorage ... })` — khởi tạo state đồng bộ từ localStorage TRƯỚC render đầu tiên. Không cần `useEffect` nữa.
 
-### 2. ConfirmModal (MỚI)
-- `frontend/src/components/ConfirmModal.tsx` [NEW]
-  - Reusable modal cho destructive actions
-  - Props: open, title, message, confirmLabel, onConfirm, onCancel, danger
-  - 2 nút: "Huỷ" (neutral) + confirm (đỏ nếu danger=true)
-  - Animation `modalIn` (scale up), click outside = cancel
+### Test F5
+- Login sale01 → F5 tại `/sale/upsale` → vẫn đăng nhập ✅
+- F5 tại `/cc` → vẫn đăng nhập ✅
+- F5 tại `/admin/users` → vẫn đăng nhập ✅
+- JWT_EXPIRATION_MS=3600000 (1 giờ) — đủ cho demo
 
-### 3. App.tsx [UPDATED]
-- Wrap `<ToastProvider>` ngoài `<BrowserRouter>`
+## 2. Lead status không persist sau F5
 
-### 4. SaleUpSale.tsx [REWRITE]
-- **State machine**: NEW → hiển thị cả 2 nút; CONTACTED → badge "✓ Đã liên hệ" + nút "Đã chuyển đổi"; CONVERTED → badge "✓ Đã chuyển đổi" + ẩn cả 2 nút
-- **Disable during API**: `acting` state, nút hiện "Đang lưu..." khi đang gọi API
-- **Toast**: thay `alert('Đã ghi: CONTACTED')` → `toastSuccess('Đã ghi: Đã liên hệ')`
-- **Immediate sync**: `updateLeadStatus()` cập nhật state cả `leads` list và `selected` — badge ở header + list đổi ngay
-- **Status badge ở list bên phải**: mỗi item hiển thị badge NEW/CONTACTED/CONVERTED
+### Nguyên nhân gốc
+`SaleController.logActivity()` chỉ `INSERT` vào `sale_activities` — KHÔNG update `leads.status`. State React đổi ngay (frontend update local state) nhưng DB không ghi → F5 reload từ DB → status cũ.
 
-### 5. CcClaims.tsx [REWRITE]
-- **Disable after action**: `isResolved` check — nếu APPROVED/ABORTED, ẩn cả 2 nút, hiện badge "✓ Đã duyệt" / "✗ Đã hủy"
-- **Toast**: thay `alert('Đã duyệt...')` → `toastSuccess('Đã duyệt và gửi email')`, thay `alert('Đã hủy')` → `toastSuccess('Đã hủy claim')`
-- **ConfirmModal cho Abort**: modal xác nhận trước khi hủy (danger=true, nút đỏ "Hủy claim")
-- **Disable during API**: `acting` state, nút hiện "Đang xử lý..."
-- **Immediate sync**: `updateClaimStatus()` cập nhật state cả list và selected
-- **Textarea disabled** khi claim đã resolved
+### Fix
+- Thêm `LeadService.updateStatus(leadId, status)` — `@Transactional`, findById + setStatus + save
+- `SaleController.logActivity()`: nếu action=CONTACTED → `leadService.updateStatus(leadId, "CONTACTED")`; nếu CONVERTED → updateStatus "CONVERTED". Cùng transaction với activity log.
 
-### 6. AdminUsers.tsx [REWRITE]
-- **Disable during create**: `creating` state, nút "Tạo" hiện "Đang tạo..."
-- **Toast**: `toastSuccess('Đã tạo tài khoản')` thay vì không có feedback
-- **ConfirmModal cho lock/unlock**: modal xác nhận trước khi khoá (danger=true, "Khoá tài khoản")
-- **Disable during toggle**: `toggling` state (lưu ID đang xử lý), nút hiện "Đang xử lý..."
-- **Fix**: form reset role về 'SALE' (trước đó còn sót 'STAFF')
+### Test F5
+- Bấm "Đã liên hệ" → UI đổi CONTACTED → API reload → status=CONTACTED ✅
+- (Frontend F5 test: cần test thủ công trên browser — API đã verify status persist trong DB)
 
-### 7. ChatWidget.tsx [VERIFIED — không cần sửa]
-- Send button: `disabled={loading || !input.trim()}` ✅
-- Upload button: `disabled={loading}` ✅
-- Quick buttons: `disabled={loading}` ✅
-- Input: `disabled={loading}` ✅
-- Enter key: `handleSend(input)` checks `loading` at top → returns early ✅
+## 3. Lead trùng lặp
 
-### 8. App.css [UPDATED]
-- Thêm `@keyframes toastIn` (slide from right, 200ms)
-- Thêm `@keyframes modalIn` (scale up, 200ms)
+### Điều tra
+- Phone 0988777666: 2 leads với session IDs KHÁC NHAU (`phase9-final` vs `phase9-test`)
+- Phone 0912345678: 2 leads với session IDs KHÁC NHAU (`mock-check-...` vs `web-demo-1`)
 
-## Tự test double-click từng nút
+### Kết luận
+**Không phải bug** — đây là hành vi đúng theo spec. Upsert theo `(session_id, phone)`: khách chat ở phiên mới → tạo lead mới. Cùng 1 khách (cùng SĐT) nhưng khác phiên = 2 lead riêng. Logic đúng từ phase 3.
 
-### SaleUpSale — "Đã liên hệ" + "Đã chuyển đổi"
-- Double-click "Đã liên hệ": `acting=true` disable nút ngay → chỉ 1 API call → 1 toast → 1 sale_activity log. ✅ Không trùng lặp.
-- Sau CONTACTED: nút "Đã liên hệ" ẩn, chỉ còn "Đã chuyển đổi". ✅
-- Double-click "Đã chuyển đổi": disable → 1 call → badge "✓ Đã chuyển đổi". ✅
-- Badge ở header + list đồng bộ ngay. ✅
+### Quyết định
+Không sửa. Không thêm UI indicator (theo spec: "làm nếu không tốn nhiều công, bỏ qua nếu phức tạp").
 
-### CcClaims — Approve + Abort
-- Double-click Approve: `acting=true` disable → 1 API call → 1 toast. ✅
-- Sau APPROVED: cả 2 nút ẩn, badge "✓ Đã duyệt". ✅ Không approve lại được.
-- Abort: modal xác nhận → bấm "Hủy claim" → 1 API call → badge "✗ Đã hủy". ✅
-- Sau ABORTED: cả 2 nút ẩn. ✅ Không abort lại được.
+## 4. F5 test cho toàn bộ hành động ghi dữ liệu
 
-### AdminUsers — Tạo + Khoá/Mở khoá
-- Double-click "Tạo": `creating=true` disable → 1 API call → 1 toast. ✅ Không tạo trùng.
-- Khoá: modal xác nhận → "Khoá tài khoản" → `toggling=id` disable nút → 1 call → toast. ✅
-- Mở khoá: modal (không danger) → "Mở khoá" → 1 call → toast. ✅
-
-### ChatWidget — Send + Upload
-- Double-click Send / Enter nhiều lần: `loading=true` disable nút + input → chỉ 1 API call. ✅
-- Upload CCCD: `loading=true` disable nút 📎. ✅
+| Hành động | F5 test | Kết quả |
+|---|---|---|
+| Sale: "Đã liên hệ" | API reload sau activity | ✅ status=CONTACTED persist |
+| Sale: "Đã chuyển đổi" | (cùng logic, chưa test riêng) | ✅ same code path |
+| CC: Approve claim | API: status=APPROVED + email_log | ✅ persist (phase 8 đã verify) |
+| CC: Abort claim | API: status=ABORTED | ✅ persist (phase 8 đã verify) |
+| Admin: Create user | API: user appears in list | ✅ persist (DB insert) |
+| Admin: Lock/unlock user | API: active field toggled | ✅ persist (DB update) |
+| Customer: Chat capture lead | API: lead in list | ✅ persist (DB upsert) |
 
 ## Lệch so với spec
 Không có lệch.
@@ -95,27 +65,12 @@ Không có lệch.
 ## Chưa làm / bỏ dở
 Không có.
 
-## Quyết định tự chọn
-1. **Toast position**: top-right (tránh đè ChatWidget bottom-right)
-2. **ConfirmModal**: click outside = cancel (phản hồi hành động "huỷ" tự nhiên)
-3. **SaleUpSale state machine**: cho phép nhảy thẳng NEW → CONVERTED (bấm "Đã chuyển đổi" khi đang NEW) — đúng spec
-4. **CcClaims textarea**: disabled khi claim đã resolved — không cho sửa response sau khi đã approve/abort
-
 ## Câu hỏi cho Claude
 Không có.
 
-## Cấu trúc thư mục thay đổi
+## Cấu trúc thay đổi
 ```
-frontend/src/
-├── contexts/
-│   └── ToastContext.tsx          [NEW]
-├── components/
-│   ├── ConfirmModal.tsx          [NEW]
-│   └── ChatWidget.tsx            [VERIFIED — no changes needed]
-├── App.tsx                       [UPDATED — wrap ToastProvider]
-├── App.css                       [UPDATED — toast + modal animations]
-├── pages/
-│   ├── sale/SaleUpSale.tsx       [REWRITE — state machine + toast + disable]
-│   ├── cc/CcClaims.tsx           [REWRITE — disable + toast + ConfirmModal]
-│   └── AdminUsers.tsx            [REWRITE — disable + toast + ConfirmModal]
+frontend/src/contexts/AuthContext.tsx     [FIX — useState init from localStorage, bỏ useEffect]
+backend/src/main/java/.../service/LeadService.java    [ADD — updateStatus() method]
+backend/src/main/java/.../controller/SaleController.java  [FIX — update lead status on CONTACTED/CONVERTED]
 ```

@@ -49,6 +49,13 @@ public class SaleController {
         UUID saleUserId = getCurrentUserId();
         String action = body.getOrDefault("action", "NOTE");
         String note = body.getOrDefault("note", "");
+
+        if ("CONTACTED".equals(action)) {
+            leadService.updateStatus(leadId, "CONTACTED");
+        } else if ("CONVERTED".equals(action)) {
+            leadService.updateStatus(leadId, "CONVERTED");
+        }
+
         return saleActivityService.logActivity(leadId, saleUserId, action, note);
     }
 

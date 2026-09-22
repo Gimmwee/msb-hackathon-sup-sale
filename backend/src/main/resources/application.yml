@@ -28,7 +28,8 @@ spring:
 greennode:
   api-key: ${GREENNODE_API_KEY:}
   base-url: ${LLM_BASE_URL:https://maas-llm-aiplatform-hcm.api.vngcloud.vn/v1}
-  model: ${LLM_MODEL:qwen/qwen3.6-flash}
+  model-customer: ${LLM_MODEL_CUSTOMER:qwen/qwen3.6-flash}
+  model-staff: ${LLM_MODEL_STAFF:qwen/qwen3.6-flash}
   mock: ${LLM_MOCK:false}
 
 dashboard:

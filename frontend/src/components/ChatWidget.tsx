@@ -9,9 +9,9 @@ interface Props {
 }
 
 const CUSTOMER_QUICK = [
-  'Chào shop, mình muốn vay mua ô tô',
-  'Mình muốn vay tín chấp',
-  'Mình muốn mở thẻ tín dụng',
+  'Tôi muốn vay mua ô tô',
+  'Tôi muốn vay tín chấp',
+  'Tôi muốn mở thẻ tín dụng',
 ]
 
 const STAFF_QUICK: string[] = []

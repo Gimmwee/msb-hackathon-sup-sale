@@ -2,9 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
-import Landing from './pages/Landing'
-import Login from './pages/Login'
 import CustomerView from './pages/CustomerView'
+import Login from './pages/Login'
 import ConversationHistory from './pages/ConversationHistory'
 import AdminUsers from './pages/AdminUsers'
 import SaleLayout from './pages/sale/SaleLayout'
@@ -20,7 +19,7 @@ export default function App() {
       <ToastProvider>
         <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<CustomerView />} />
           <Route path="/customer" element={<CustomerView />} />
           <Route path="/login" element={<Login />} />
           <Route path="/staff/dashboard" element={<Navigate to="/sale/upsale" replace />} />

@@ -38,6 +38,9 @@ services:
       API_PROXY_TARGET: http://backend:8080
       VITE_API_BASE_URL: http://localhost:8080
       VITE_DASHBOARD_API_KEY: ${DASHBOARD_API_KEY}
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
     depends_on:
       backend:
         condition: service_healthy

@@ -7,4 +7,5 @@ import java.util.Map;
 
 public interface LlmClient {
     JsonNode chatCompletion(List<Map<String, Object>> messages, List<Map<String, Object>> tools);
+    JsonNode chatCompletion(String model, List<Map<String, Object>> messages, List<Map<String, Object>> tools);
 }

@@ -45,4 +45,13 @@ public class LeadService {
 
     public long countTotal() { return leadRepository.count(); }
     public long countByStatus(String status) { return leadRepository.countByStatus(status); }
+
+    @Transactional
+    public Lead updateStatus(java.util.UUID leadId, String status) {
+        Lead lead = leadRepository.findById(leadId)
+                .orElseThrow(() -> new RuntimeException("Lead not found: " + leadId));
+        lead.setStatus(status);
+        log.info("Lead status updated: id={}, status={}", leadId, status);
+        return leadRepository.save(lead);
+    }
 }

@@ -57,7 +57,6 @@ export default function Login() {
             {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
-        <p className="login-hint">Demo: admin/Admin@123 • sale01/Sale@123 • cc01/Cc@12345</p>
         <button className="back-btn" onClick={() => navigate('/')}>← Quay lại</button>
       </div>
     </div>

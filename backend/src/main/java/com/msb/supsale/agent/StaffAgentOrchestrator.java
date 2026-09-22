@@ -114,7 +114,7 @@ public class StaffAgentOrchestrator {
         String reply = null;
 
         for (int i = 0; i < 5; i++) {
-            JsonNode response = llmClient.chatCompletion(messages, toolDefs);
+            JsonNode response = llmClient.chatCompletion(config.getModelStaff(), messages, toolDefs);
             JsonNode choice = response.path("choices").path(0).path("message");
             JsonNode toolCalls = choice.path("tool_calls");
 
@@ -249,7 +249,7 @@ public class StaffAgentOrchestrator {
         messages.add(Map.of("role", "assistant", "content", "Kết quả tra cứu: " + toolResult + "\n\nHãy viết câu trả lời tự nhiên dựa trên kết quả này."));
 
         try {
-            JsonNode response = llmClient.chatCompletion(messages, null);
+            JsonNode response = llmClient.chatCompletion(config.getModelStaff(), messages, null);
             return response.path("choices").path(0).path("message").path("content").asText();
         } catch (Exception e) {
             return "Kết quả tra cứu " + lookupType + ": " + toolResult;
