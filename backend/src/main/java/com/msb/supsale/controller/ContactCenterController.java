@@ -5,6 +5,7 @@ import com.msb.supsale.model.Message;
 import com.msb.supsale.repository.UserRepository;
 import com.msb.supsale.service.ClaimService;
 import com.msb.supsale.service.ConversationService;
+import com.msb.supsale.service.CustomerService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -20,12 +21,14 @@ public class ContactCenterController {
     private final ClaimService claimService;
     private final ConversationService conversationService;
     private final UserRepository userRepository;
+    private final CustomerService customerService;
 
     public ContactCenterController(ClaimService claimService, ConversationService conversationService,
-                                   UserRepository userRepository) {
+                                   UserRepository userRepository, CustomerService customerService) {
         this.claimService = claimService;
         this.conversationService = conversationService;
         this.userRepository = userRepository;
+        this.customerService = customerService;
     }
 
     @GetMapping
@@ -51,6 +54,13 @@ public class ContactCenterController {
     public Claim approve(@PathVariable UUID id, @RequestBody Map<String, String> body) {
         UUID resolvedBy = getCurrentUserId();
         String editedResponse = body.get("response");
+        String email = body.get("email");
+        if (email != null && !email.isBlank()) {
+            Claim claim = claimService.getClaim(id);
+            if (claim.getCustomerPhone() != null && !claim.getCustomerPhone().isBlank()) {
+                customerService.updateEmail(claim.getCustomerPhone(), email);
+            }
+        }
         return claimService.approveClaim(id, resolvedBy, editedResponse);
     }
 

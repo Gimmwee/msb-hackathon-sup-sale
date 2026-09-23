@@ -161,11 +161,13 @@ export async function getClaimMessages(claimId: string): Promise<{ role: string;
   return res.json()
 }
 
-export async function approveClaim(claimId: string, response: string): Promise<void> {
+export async function approveClaim(claimId: string, response: string, email?: string): Promise<void> {
+  const body: Record<string, string> = { response }
+  if (email) body.email = email
   await fetch(`${API_BASE}/api/v1/cc/claims/${claimId}/approve`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ response }),
+    body: JSON.stringify(body),
   })
 }
 
@@ -174,4 +176,10 @@ export async function abortClaim(claimId: string): Promise<void> {
     method: 'POST',
     headers: { ...authHeaders() },
   })
+}
+
+export async function getMonitorStatus(): Promise<Record<string, unknown>> {
+  const res = await fetch(`${API_BASE}/api/v1/admin/monitor`, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Monitor failed')
+  return res.json()
 }

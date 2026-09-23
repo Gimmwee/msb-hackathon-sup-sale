@@ -21,6 +21,7 @@ public class OcrService {
     private final GreenNodeConfig config;
     private final ObjectMapper objectMapper;
     private final CustomerService customerService;
+    private final ConversationService conversationService;
 
     private static final String VISION_MODEL = "google/gemma-4-31b-it";
 
@@ -40,10 +41,12 @@ public class OcrService {
             Chỉ trả về JSON, không thêm giải thích.
             """;
 
-    public OcrService(GreenNodeConfig config, ObjectMapper objectMapper, CustomerService customerService) {
+    public OcrService(GreenNodeConfig config, ObjectMapper objectMapper, CustomerService customerService,
+                      ConversationService conversationService) {
         this.config = config;
         this.objectMapper = objectMapper;
         this.customerService = customerService;
+        this.conversationService = conversationService;
         String baseUrl = config.getBaseUrl() != null && config.getBaseUrl().contains("host.docker.internal")
             ? CLOUD_LLM_URL : config.getBaseUrl();
         this.webClient = WebClient.builder()
@@ -114,6 +117,21 @@ public class OcrService {
             } else {
                 dto.setSaved(false);
                 dto.setMessage("Đã trích xuất thông tin CCCD");
+            }
+
+            if (sessionId != null && !sessionId.isEmpty() && dto.getFullName() != null) {
+                StringBuilder ctxMsg = new StringBuilder("[OCR CCCD] Khách hàng đã tải ảnh CCCD. Thông tin trích xuất:");
+                ctxMsg.append("\n- Họ tên: ").append(dto.getFullName());
+                if (dto.getIdNumber() != null) ctxMsg.append("\n- Số CCCD: ").append(dto.getIdNumber());
+                if (dto.getDob() != null) ctxMsg.append("\n- Ngày sinh: ").append(dto.getDob());
+                if (dto.getGender() != null) ctxMsg.append("\n- Giới tính: ").append(dto.getGender());
+                if (dto.getAddress() != null) ctxMsg.append("\n- Địa chỉ: ").append(dto.getAddress());
+                if (phone != null && !phone.isEmpty()) ctxMsg.append("\n- SĐT: ").append(phone);
+                ctxMsg.append("\n=> Hãy sử dụng thông tin này để hỗ trợ khách hàng. KHÔNG hỏi lại họ tên.");
+
+                conversationService.ensureConversation(sessionId, "WEB");
+                conversationService.saveMessage(sessionId, "system", ctxMsg.toString());
+                log.info("OCR info injected into conversation: sessionId={}, name={}", sessionId, dto.getFullName());
             }
 
             return dto;

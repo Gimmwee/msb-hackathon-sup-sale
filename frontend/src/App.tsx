@@ -6,6 +6,7 @@ import CustomerView from './pages/CustomerView'
 import Login from './pages/Login'
 import ConversationHistory from './pages/ConversationHistory'
 import AdminUsers from './pages/AdminUsers'
+import AdminMonitor from './pages/AdminMonitor'
 import SaleLayout from './pages/sale/SaleLayout'
 import SaleUpSale from './pages/sale/SaleUpSale'
 import SaleTransactions from './pages/sale/SaleTransactions'
@@ -25,6 +26,7 @@ export default function App() {
           <Route path="/staff/dashboard" element={<Navigate to="/sale/upsale" replace />} />
           <Route path="/staff/history" element={<ProtectedRoute><ConversationHistory /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute requiredRole="ADMIN"><AdminUsers /></ProtectedRoute>} />
+          <Route path="/admin/monitor" element={<ProtectedRoute requiredRole="ADMIN"><AdminMonitor /></ProtectedRoute>} />
           <Route path="/sale" element={<ProtectedRoute roles={['SALE','ADMIN']}><SaleLayout /></ProtectedRoute>}>
             <Route path="upsale" element={<SaleUpSale />} />
             <Route path="transactions" element={<SaleTransactions />} />

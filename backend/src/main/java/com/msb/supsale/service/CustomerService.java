@@ -24,6 +24,18 @@ public class CustomerService {
         return customerRepository.findByIdNumber(idNumber);
     }
 
+    public Optional<Customer> findByName(String name) {
+        return customerRepository.findByNameIgnoreCase(name);
+    }
+
+    public Optional<Customer> search(String query) {
+        Optional<Customer> byPhone = customerRepository.findByPhone(query);
+        if (byPhone.isPresent()) return byPhone;
+        Optional<Customer> byId = customerRepository.findByIdNumber(query);
+        if (byId.isPresent()) return byId;
+        return customerRepository.findByNameIgnoreCase(query);
+    }
+
     @Transactional
     public void updateEmail(String phone, String email) {
         customerRepository.findByPhone(phone).ifPresent(customer -> {

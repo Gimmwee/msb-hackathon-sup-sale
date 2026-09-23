@@ -41,15 +41,7 @@ public class SaleLookupController {
     public Map<String, Object> lookup(@RequestParam String query) {
         Map<String, Object> result = new HashMap<>();
 
-        var customer = customerService.findByPhone(query);
-        if (customer.isEmpty()) {
-            for (Lead lead : leadRepository.findAll()) {
-                if (lead.getPhone().equals(query) || lead.getCustomerName().toLowerCase().contains(query.toLowerCase())) {
-                    customer = customerService.findByPhone(lead.getPhone());
-                    break;
-                }
-            }
-        }
+        var customer = customerService.search(query);
         customer.ifPresent(c -> {
             result.put("customer", Map.of(
                     "name", c.getName(), "phone", c.getPhone(),
@@ -58,7 +50,10 @@ public class SaleLookupController {
             ));
         });
 
-        Optional<CicRecord> cic = cicService.lookup(query);
+        String phoneForData = customer.map(c -> c.getPhone()).orElse(query);
+
+        Optional<CicRecord> cic = cicService.lookup(phoneForData);
+        if (cic.isEmpty()) cic = cicService.lookup(query);
         if (cic.isPresent()) {
             CicRecord r = cic.get();
             String tier = recommendationService.getCicTier(r.getCreditScore());
@@ -70,15 +65,14 @@ public class SaleLookupController {
             ));
         }
 
-        List<Transaction> txns = transactionService.getByPhone(query);
+        List<Transaction> txns = transactionService.getByPhone(phoneForData);
         if (!txns.isEmpty()) {
-            String dominantCategory = transactionService.getDominantCategory(query);
+            String dominantCategory = transactionService.getDominantCategory(phoneForData);
             result.put("transactions", txns);
             result.put("dominantCategory", dominantCategory);
         }
 
-        String phoneForRec = customer.map(c -> c.getPhone()).orElse(query);
-        Optional<Product> recommended = recommendationService.recommend(phoneForRec);
+        Optional<Product> recommended = recommendationService.recommend(phoneForData);
         recommended.ifPresent(p -> result.put("recommendedProduct", Map.of(
                 "name", p.getName(), "description", p.getDescription()
         )));
@@ -88,18 +82,8 @@ public class SaleLookupController {
 
     @GetMapping("/transactions")
     public List<Transaction> getTransactions(@RequestParam String query) {
-        List<Transaction> byPhone = transactionService.getByPhone(query);
-        if (!byPhone.isEmpty()) return byPhone;
-
-        var byCccd = customerService.findByIdNumber(query);
-        if (byCccd.isPresent()) return transactionService.getByPhone(byCccd.get().getPhone());
-
-        List<Transaction> results = new java.util.ArrayList<>();
-        for (var lead : leadRepository.findAll()) {
-            if (lead.getCustomerName() != null && lead.getCustomerName().toLowerCase().contains(query.toLowerCase())) {
-                results.addAll(transactionService.getByPhone(lead.getPhone()));
-            }
-        }
-        return results;
+        var customer = customerService.search(query);
+        if (customer.isPresent()) return transactionService.getByPhone(customer.get().getPhone());
+        return transactionService.getByPhone(query);
     }
 }

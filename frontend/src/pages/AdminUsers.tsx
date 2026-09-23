@@ -56,6 +56,7 @@ export default function AdminUsers() {
           <div><h1>Quản lý tài khoản</h1><p className="subtitle">{user?.fullName} (ADMIN)</p></div>
         </div>
         <div className="header-right">
+          <button className="header-btn" onClick={() => navigate('/admin/monitor')}>📊 Monitor</button>
           <button className="header-btn" onClick={() => navigate('/sale/upsale')}>← Sale Dashboard</button>
           <button className="header-btn" onClick={() => { logout(); navigate('/') }}>Đăng xuất</button>
         </div>
