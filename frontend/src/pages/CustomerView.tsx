@@ -5,9 +5,9 @@ import ChatWidget from '../components/ChatWidget'
 export default function CustomerView() {
   const navigate = useNavigate()
   const [chatOpen, setChatOpen] = useState(false)
-  const sessionId = localStorage.getItem('customer_session_id') || (() => {
+  const sessionId = sessionStorage.getItem('customer_session_id') || (() => {
     const id = `web-${Date.now()}`
-    localStorage.setItem('customer_session_id', id)
+    sessionStorage.setItem('customer_session_id', id)
     return id
   })()
 
