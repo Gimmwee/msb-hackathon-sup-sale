@@ -11,6 +11,7 @@ import com.msb.supsale.model.Lead;
 import com.msb.supsale.model.Message;
 import com.msb.supsale.service.ClaimService;
 import com.msb.supsale.service.ConversationService;
+import com.msb.supsale.service.CustomerService;
 import com.msb.supsale.service.LeadService;
 import com.msb.supsale.util.PhoneValidator;
 import org.slf4j.Logger;
@@ -32,6 +33,7 @@ public class AgentOrchestrator {
     private final GreenNodeConfig config;
     private final LeadService leadService;
     private final ClaimService claimService;
+    private final CustomerService customerService;
 
     private static final Pattern MOCK_PHONE = Pattern.compile("(0|\\+84)[3-9][0-9]{8}");
     private static final Pattern MOCK_NAME = Pattern.compile("(?:mình tên|minh ten|em tên|em ten|tôi tên|toi ten|tui tên|tui ten|tên|ten)\\s+([^,\\.\\d]+?)(?:\\s*,|\\s*\\.|\\s+\\d|$)", Pattern.CASE_INSENSITIVE);
@@ -71,7 +73,7 @@ public class AgentOrchestrator {
 
     public AgentOrchestrator(LlmClient llmClient, ConversationService conversationService,
                              ObjectMapper objectMapper, GreenNodeConfig config, LeadService leadService,
-                             ClaimService claimService,
+                             ClaimService claimService, CustomerService customerService,
                              LeadTool leadTool, ProductTool productTool, CustomerTool customerTool) {
         this.llmClient = llmClient;
         this.conversationService = conversationService;
@@ -79,6 +81,7 @@ public class AgentOrchestrator {
         this.config = config;
         this.leadService = leadService;
         this.claimService = claimService;
+        this.customerService = customerService;
         this.tools = new LinkedHashMap<>();
         this.tools.put(leadTool.getName(), leadTool);
         this.tools.put(productTool.getName(), productTool);
@@ -267,8 +270,14 @@ public class AgentOrchestrator {
 
             String customerName = null;
             String customerPhone = null;
-            Matcher pm = MOCK_PHONE.matcher(userMessage);
+
+            StringBuilder fullText = new StringBuilder(userMessage);
+            for (Message m : conversationService.getHistory(sessionId)) {
+                fullText.append(" ").append(m.getContent());
+            }
+            Matcher pm = MOCK_PHONE.matcher(fullText.toString());
             if (pm.find()) customerPhone = pm.group(0);
+
             for (Lead lead : leadService.getAllLeads()) {
                 if (lead.getSessionId().equals(sessionId)) {
                     customerName = lead.getCustomerName();
@@ -277,12 +286,19 @@ public class AgentOrchestrator {
                 }
             }
 
+            if (customerPhone != null) {
+                var customer = customerService.findByPhone(customerPhone);
+                if (customer.isPresent()) {
+                    if (customerName == null) customerName = customer.get().getName();
+                }
+            }
+
             String topic = classifyClaimTopic(userMessage);
             String claimContent = userMessage;
             String suggestedResponse = generateClaimResponse(topic);
 
             claimService.createClaim(sessionId, customerName, customerPhone, topic, claimContent, suggestedResponse);
-            log.info("Claim saved: session={}, topic={}", sessionId, topic);
+            log.info("Claim saved: session={}, topic={}, name={}, phone={}", sessionId, topic, customerName, customerPhone);
         } catch (Exception e) {
             log.error("Claim detection failed: {}", e.getMessage());
         }

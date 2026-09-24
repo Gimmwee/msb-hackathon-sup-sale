@@ -61,6 +61,9 @@ public class ClaimService {
         claim.setResolvedBy(resolvedBy);
 
         String response = editedResponse != null && !editedResponse.isBlank() ? editedResponse : claim.getSuggestedResponse();
+        String customerName = claim.getCustomerName() != null ? claim.getCustomerName() : "Quý khách";
+        String claimRef = claimId.toString().substring(0, 8).toUpperCase();
+        String topic = claim.getTopic() != null ? claim.getTopic() : "Khiếu nại";
 
         String toEmail;
         boolean isMockEmail;
@@ -74,15 +77,45 @@ public class ClaimService {
             isMockEmail = true;
             log.info("No real email, using fallback: {}", toEmail);
         }
-        String subject = "Phản hồi khiếu nại từ MSB";
 
-        emailService.send(toEmail, subject, response, isMockEmail);
+        String subject = "[MSB] Xac nhan khieu nai — " + topic + " — Khach hang: " + customerName + " — Ma #" + claimRef;
+
+        StringBuilder bodyBuilder = new StringBuilder();
+        bodyBuilder.append("Kinh gui: ").append(customerName).append(",\n\n");
+        bodyBuilder.append("MSB Bank xin chan thanh cam on Anh/Chi da phan hoi va gui khieu nai den chung toi.\n\n");
+        bodyBuilder.append("═══════════════════════════════════════\n");
+        bodyBuilder.append("THONG TIN KHIEU NAI\n");
+        bodyBuilder.append("═══════════════════════════════════════\n");
+        bodyBuilder.append("Ma khiếu nai: #").append(claimRef).append("\n");
+        bodyBuilder.append("Chu de: ").append(topic).append("\n");
+        if (claim.getCustomerPhone() != null) {
+            bodyBuilder.append("So dien thoai: ").append(claim.getCustomerPhone()).append("\n");
+        }
+        bodyBuilder.append("Thoi gian nhan: ").append(claim.getCreatedAt() != null ? claim.getCreatedAt().toString().substring(0, 19) : "N/A").append("\n");
+        bodyBuilder.append("Noi dung khiếu nai cua Anh/Chi:\n");
+        bodyBuilder.append("> ").append(claim.getClaimContent() != null ? claim.getClaimContent() : "N/A").append("\n\n");
+        bodyBuilder.append("═══════════════════════════════════════\n");
+        bodyBuilder.append("PHAN HOI TU MSB\n");
+        bodyBuilder.append("═══════════════════════════════════════\n");
+        bodyBuilder.append(response).append("\n\n");
+        bodyBuilder.append("═══════════════════════════════════════\n");
+        bodyBuilder.append("THONG TIN LIEN HE\n");
+        bodyBuilder.append("═══════════════════════════════════════\n");
+        bodyBuilder.append("Hotline: 1900 1088 (24/7)\n");
+        bodyBuilder.append("Email: support@msb.com\n");
+        bodyBuilder.append("Ma tham chieu: #").append(claimRef).append(" (Anh/Chi vui long ghi ma nay khi lien he)\n\n");
+        bodyBuilder.append("Tran trong,\n");
+        bodyBuilder.append("MSB Customer Care");
+
+        String fullBody = bodyBuilder.toString();
+
+        emailService.send(toEmail, subject, fullBody, isMockEmail);
 
         EmailLog emailLog = new EmailLog();
         emailLog.setClaimId(claimId);
         emailLog.setToEmail(toEmail);
         emailLog.setSubject(subject);
-        emailLog.setBody(response);
+        emailLog.setBody(fullBody);
         emailLog.setMock(isMockEmail);
         emailLogRepository.save(emailLog);
 
@@ -98,5 +131,11 @@ public class ClaimService {
         claim.setResolvedBy(resolvedBy);
         log.info("Claim aborted: id={}", claimId);
         return claimRepository.save(claim);
+    }
+
+    @Transactional
+    public void deleteClaim(UUID claimId) {
+        claimRepository.deleteById(claimId);
+        log.info("Claim deleted: id={}", claimId);
     }
 }

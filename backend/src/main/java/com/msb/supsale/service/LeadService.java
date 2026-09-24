@@ -54,4 +54,10 @@ public class LeadService {
         log.info("Lead status updated: id={}, status={}", leadId, status);
         return leadRepository.save(lead);
     }
+
+    @Transactional
+    public void deleteLead(java.util.UUID leadId) {
+        leadRepository.deleteById(leadId);
+        log.info("Lead deleted: id={}", leadId);
+    }
 }

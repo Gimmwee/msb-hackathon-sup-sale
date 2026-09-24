@@ -38,10 +38,26 @@ public class CustomerService {
 
     @Transactional
     public void updateEmail(String phone, String email) {
-        customerRepository.findByPhone(phone).ifPresent(customer -> {
-            customer.setEmail(email);
-            customerRepository.save(customer);
+        Customer customer = customerRepository.findByPhone(phone).orElseGet(() -> {
+            Customer c = new Customer();
+            c.setPhone(phone);
+            c.setName("Unknown");
+            return c;
         });
+        customer.setEmail(email);
+        customerRepository.save(customer);
+    }
+
+    @Transactional
+    public Customer upsertFromLead(String phone, String name, String email) {
+        Customer customer = customerRepository.findByPhone(phone).orElseGet(() -> {
+            Customer c = new Customer();
+            c.setPhone(phone);
+            return c;
+        });
+        if (name != null && !name.isBlank()) customer.setName(name);
+        if (email != null && !email.isBlank()) customer.setEmail(email);
+        return customerRepository.save(customer);
     }
 
     @Transactional

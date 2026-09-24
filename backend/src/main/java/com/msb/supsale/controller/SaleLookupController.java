@@ -43,11 +43,13 @@ public class SaleLookupController {
 
         var customer = customerService.search(query);
         customer.ifPresent(c -> {
-            result.put("customer", Map.of(
-                    "name", c.getName(), "phone", c.getPhone(),
-                    "idNumber", c.getIdNumber() != null ? c.getIdNumber() : "",
-                    "address", c.getAddress() != null ? c.getAddress() : ""
-            ));
+            Map<String, Object> custMap = new HashMap<>();
+            custMap.put("name", c.getName());
+            custMap.put("phone", c.getPhone());
+            custMap.put("idNumber", c.getIdNumber() != null ? c.getIdNumber() : "");
+            custMap.put("address", c.getAddress() != null ? c.getAddress() : "");
+            custMap.put("email", c.getEmail() != null ? c.getEmail() : "");
+            result.put("customer", custMap);
         });
 
         String phoneForData = customer.map(c -> c.getPhone()).orElse(query);

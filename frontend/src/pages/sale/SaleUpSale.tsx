@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getSaleLeads, getLeadMessages, logSaleActivity } from '../../services/api'
+import { getSaleLeads, getLeadMessages, logSaleActivity, deleteLead } from '../../services/api'
 import { useToast } from '../../contexts/ToastContext'
+import ConfirmModal from '../../components/ConfirmModal'
 import type { Lead } from '../../types'
 
 const PAGE_SIZE = 10
@@ -12,6 +13,7 @@ export default function SaleUpSale() {
   const [messages, setMessages] = useState<{ role: string; content: string; createdAt: string }[]>([])
   const [fadeKey, setFadeKey] = useState(0)
   const [acting, setActing] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [page, setPage] = useState(0)
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
@@ -56,6 +58,22 @@ export default function SaleUpSale() {
       toastSuccess(`Đã ghi: ${action === 'CONTACTED' ? 'Đã liên hệ' : 'Đã chuyển đổi'}`)
     } catch {
       toastError('Không thể ghi nhận hoạt động')
+    } finally {
+      setActing(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!selected) return
+    setShowDeleteModal(false)
+    setActing(true)
+    try {
+      await deleteLead(selected.id)
+      setLeads(prev => prev.filter(l => l.id !== selected.id))
+      setSelected(null)
+      toastSuccess('Đã xóa lead')
+    } catch {
+      toastError('Không thể xóa lead')
     } finally {
       setActing(false)
     }
@@ -147,6 +165,9 @@ export default function SaleUpSale() {
                 {selected.status === 'CONVERTED' && (
                   <span style={{ fontSize: '13px', color: 'var(--status-success)', fontWeight: 600 }}>✓ Đã chuyển đổi</span>
                 )}
+                <button className="send-btn" style={{ background: 'var(--console-surface)', color: 'var(--status-error)', border: '1px solid var(--status-error)', marginLeft: 'auto' }} onClick={() => setShowDeleteModal(true)} disabled={acting}>
+                  🗑 Xóa
+                </button>
               </div>
             </div>
           ) : (
@@ -250,6 +271,15 @@ export default function SaleUpSale() {
           )}
         </div>
       </div>
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Xác nhận xóa lead"
+        message={`Bạn có chắc muốn XÓA lead của ${selected?.customerName}? Dữ liệu sẽ bị xóa vĩnh viễn.`}
+        confirmLabel="Xóa vĩnh viễn"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteModal(false)}
+        danger
+      />
     </div>
   )
 }

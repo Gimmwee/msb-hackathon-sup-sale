@@ -63,9 +63,7 @@ public class LeadTool implements AgentTool {
 
         Lead lead = leadService.captureLead(sessionId, name, normalized, interest);
 
-        if (email != null && !email.isEmpty()) {
-            customerService.updateEmail(normalized, email);
-        }
+        customerService.upsertFromLead(normalized, name, email);
 
         return String.format("{\"success\":true,\"leadId\":\"%s\",\"message\":\"Lead đã được lưu thành công\"}", lead.getId());
     }

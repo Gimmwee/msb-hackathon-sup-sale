@@ -130,6 +130,14 @@ export async function logSaleActivity(leadId: string, action: string, note: stri
   })
 }
 
+export async function deleteLead(leadId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/v1/sale/leads/${leadId}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  if (!res.ok) throw new Error('Delete lead failed')
+}
+
 export async function getSaleKpi(): Promise<{ totalActivities: number; contacted: number; converted: number; conversionRate: number }> {
   const res = await fetch(`${API_BASE}/api/v1/sale/kpi`, { headers: authHeaders() })
   if (!res.ok) throw new Error('Get KPI failed')
@@ -176,6 +184,20 @@ export async function abortClaim(claimId: string): Promise<void> {
     method: 'POST',
     headers: { ...authHeaders() },
   })
+}
+
+export async function deleteClaim(claimId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/v1/cc/claims/${claimId}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  if (!res.ok) throw new Error('Delete claim failed')
+}
+
+export async function getClaimCustomer(phone: string): Promise<{ name: string; phone: string; email: string; idNumber: string; address: string }> {
+  const res = await fetch(`${API_BASE}/api/v1/cc/claims/customer?phone=${encodeURIComponent(phone)}`, { headers: authHeaders() })
+  if (!res.ok) throw new Error('Customer not found')
+  return res.json()
 }
 
 export async function getMonitorStatus(): Promise<Record<string, unknown>> {

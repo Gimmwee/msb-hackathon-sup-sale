@@ -39,6 +39,11 @@ public class SaleController {
         return leadService.getAllLeads().stream().map(LeadDto::new).toList();
     }
 
+    @DeleteMapping("/leads/{leadId}")
+    public void deleteLead(@PathVariable UUID leadId) {
+        leadService.deleteLead(leadId);
+    }
+
     @GetMapping("/leads/{sessionId}/messages")
     public List<Message> getLeadMessages(@PathVariable String sessionId) {
         return conversationService.getHistory(sessionId);

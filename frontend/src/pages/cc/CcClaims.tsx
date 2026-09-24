@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
-import { getClaims, getClaimMessages, approveClaim, abortClaim, saleLookup } from '../../services/api'
+import { getClaims, getClaimMessages, approveClaim, abortClaim, deleteClaim, getClaimCustomer } from '../../services/api'
 import ChatWidget from '../../components/ChatWidget'
 import ConfirmModal from '../../components/ConfirmModal'
 import type { ClaimData } from '../../types'
@@ -21,6 +21,8 @@ export default function CcClaims() {
   const [search, setSearch] = useState('')
   const [acting, setActing] = useState(false)
   const [showAbortModal, setShowAbortModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [loadingCustomer, setLoadingCustomer] = useState(false)
   const [page, setPage] = useState(0)
   const [customerEmail, setCustomerEmail] = useState('')
   const [customerInfo, setCustomerInfo] = useState<{ name: string; phone: string; email: string; idNumber: string } | null>(null)
@@ -53,19 +55,22 @@ export default function CcClaims() {
     setCustomerInfo(null)
     try { setMessages(await getClaimMessages(claim.id)) } catch { setMessages([]) }
     if (claim.customerPhone) {
+      setLoadingCustomer(true)
       try {
-        const info = await saleLookup(claim.customerPhone) as Record<string, unknown>
-        const cust = info.customer as Record<string, unknown> | undefined
-        if (cust) {
-          setCustomerInfo({
-            name: cust.name as string || claim.customerName || '',
-            phone: cust.phone as string || claim.customerPhone,
-            email: cust.idNumber as string || '',
-            idNumber: cust.idNumber as string || '',
-          })
-          setCustomerEmail(cust.email as string || '')
-        }
-      } catch {}
+        const cust = await getClaimCustomer(claim.customerPhone)
+        setCustomerInfo({
+          name: cust.name || claim.customerName || '',
+          phone: cust.phone || claim.customerPhone,
+          email: cust.email || '',
+          idNumber: cust.idNumber || '',
+        })
+        setCustomerEmail(cust.email || '')
+      } catch {
+        setCustomerInfo(null)
+        setCustomerEmail('')
+      } finally {
+        setLoadingCustomer(false)
+      }
     }
   }
 
@@ -98,6 +103,24 @@ export default function CcClaims() {
       toastSuccess('Đã hủy claim')
     } catch {
       toastError('Không thể hủy claim')
+    } finally {
+      setActing(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!selected) return
+    setShowDeleteModal(false)
+    setActing(true)
+    try {
+      await deleteClaim(selected.id)
+      setClaims(prev => prev.filter(c => c.id !== selected.id))
+      setSelected(null)
+      setCustomerInfo(null)
+      setCustomerEmail('')
+      toastSuccess('Đã xóa claim')
+    } catch {
+      toastError('Không thể xóa claim')
     } finally {
       setActing(false)
     }
@@ -191,37 +214,30 @@ export default function CcClaims() {
                 🕐 Tạo lúc: {fmtTime(selected.createdAt)}
               </div>
 
-              {customerInfo && (
-                <div style={{ background: 'var(--console-surface-alt)', borderRadius: 'var(--radius-sm)', padding: '12px', marginBottom: '12px', border: '1px solid var(--console-border)' }}>
-                  <strong style={{ fontSize: '13px' }}>👤 Thông tin khách hàng:</strong>
-                  <div style={{ fontSize: '13px', marginTop: '6px' }}>
-                    <div>Họ tên: {customerInfo.name}</div>
-                    <div>SĐT: {customerInfo.phone}</div>
-                    {customerInfo.idNumber && <div>CCCD: {customerInfo.idNumber}</div>}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                      <span>Email:</span>
-                      {hasEmail ? (
-                        <span style={{ color: 'var(--status-success)', fontWeight: 600 }}>{customerEmail} ✓</span>
-                      ) : (
-                        <span style={{ color: 'var(--status-warning)' }}>chưa có — nhập bên dưới</span>
-                      )}
-                    </div>
-                  </div>
+              {loadingCustomer && (
+                <div style={{ background: 'var(--console-surface-alt)', borderRadius: 'var(--radius-sm)', padding: '12px', marginBottom: '12px', border: '1px solid var(--console-border)', fontSize: '13px', color: 'var(--console-text-muted)' }}>
+                  ⏳ Đang tải thông tin khách hàng...
                 </div>
               )}
 
-              {!isResolved && !hasEmail && (
-                <div style={{ background: 'rgba(245,158,11,0.1)', borderRadius: 'var(--radius-sm)', padding: '12px', marginBottom: '12px', border: '1px solid rgba(245,158,11,0.3)' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--status-warning)', display: 'block', marginBottom: '6px' }}>
-                    ⚠️ Khách chưa có email — nhập email để gửi phản hồi:
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="email@khachhang.com"
-                    value={customerEmail}
-                    onChange={e => setCustomerEmail(e.target.value)}
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--console-border)', background: 'var(--console-bg)', color: 'var(--console-text)', fontSize: '13px', outline: 'none' }}
-                  />
+              {customerInfo && !loadingCustomer && (
+                <div style={{ background: 'var(--console-surface-alt)', borderRadius: 'var(--radius-sm)', padding: '12px', marginBottom: '12px', border: '1px solid var(--console-border)' }}>
+                  <strong style={{ fontSize: '13px' }}>👤 Thông tin khách hàng:</strong>
+                  <div style={{ fontSize: '13px', marginTop: '6px' }}>
+                    <div>Họ tên: <strong>{customerInfo.name}</strong></div>
+                    <div>SĐT: {customerInfo.phone}</div>
+                    {customerInfo.idNumber && <div>CCCD: {customerInfo.idNumber}</div>}
+                    <div style={{ marginTop: '6px', padding: '8px 12px', borderRadius: 'var(--radius-sm)', background: hasEmail ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)' }}>
+                      <span style={{ fontWeight: 600 }}>
+                        {hasEmail ? '✉️ Email: ' : '⚠️ Email: '}
+                      </span>
+                      {hasEmail ? (
+                        <span style={{ color: 'var(--status-success)', fontWeight: 600 }}>{customerEmail}</span>
+                      ) : (
+                        <span style={{ color: 'var(--status-error)' }}>chưa có — khách chưa cung cấp cho chatbot</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -241,9 +257,15 @@ export default function CcClaims() {
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {!isResolved && (
                   <>
-                    <button className="send-btn" style={{ background: 'var(--status-success)' }} onClick={handleApprove} disabled={acting || (!hasEmail && !customerEmail)}>
-                      {acting ? 'Đang xử lý...' : hasEmail ? '✓ Approve & Send Email' : customerEmail ? '✓ Approve & Send Email' : '✓ Approve (cần email)'}
-                    </button>
+                    {hasEmail ? (
+                      <button className="send-btn" style={{ background: 'var(--status-success)' }} onClick={handleApprove} disabled={acting}>
+                        {acting ? 'Đang xử lý...' : '✓ Approve & Send Email'}
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: '13px', color: 'var(--status-error)', fontWeight: 600, background: 'rgba(239,68,68,0.1)', padding: '8px 12px', borderRadius: 'var(--radius-sm)' }}>
+                        ⚠️ Chưa có email khách hàng — không thể duyệt
+                      </span>
+                    )}
                     <button className="send-btn" style={{ background: 'var(--status-error)' }} onClick={() => setShowAbortModal(true)} disabled={acting}>
                       ✗ Abort
                     </button>
@@ -251,6 +273,9 @@ export default function CcClaims() {
                 )}
                 {selected.status === 'APPROVED' && <span style={{ color: 'var(--status-success)', fontWeight: 600, fontSize: '14px' }}>✓ Đã duyệt</span>}
                 {selected.status === 'ABORTED' && <span style={{ color: 'var(--status-error)', fontWeight: 600, fontSize: '14px' }}>✗ Đã hủy</span>}
+                <button className="send-btn" style={{ background: 'var(--console-surface)', color: 'var(--status-error)', border: '1px solid var(--status-error)', marginLeft: 'auto' }} onClick={() => setShowDeleteModal(true)} disabled={acting}>
+                  🗑 Xóa
+                </button>
               </div>
             </>
           ) : (
@@ -265,6 +290,15 @@ export default function CcClaims() {
         confirmLabel="Hủy claim"
         onConfirm={handleAbort}
         onCancel={() => setShowAbortModal(false)}
+        danger
+      />
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Xác nhận xóa claim"
+        message={`Bạn có chắc muốn XÓA claim của ${selected?.customerName}? Dữ liệu sẽ bị xóa vĩnh viễn.`}
+        confirmLabel="Xóa vĩnh viễn"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteModal(false)}
         danger
       />
       <ChatWidget sessionId={`cc-${user?.fullName?.replace(/\s/g,'')}-${Date.now()}`} mode="staff" />
